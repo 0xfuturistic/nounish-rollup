@@ -36,8 +36,8 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone, Semver {
     /// @notice The duration of the game.
     Duration public immutable GAME_DURATION;
 
-    /// @notice An onchain VM that performs single instruction steps on a fault proof program trace.
-    IBigStepper public immutable VM;
+    /// @notice The default address for the VM.
+    IBigStepper internal immutable DEFAULT_VM;
 
     /// @notice The trusted L2OutputOracle contract.
     L2OutputOracle public immutable L2_OUTPUT_ORACLE;
@@ -75,6 +75,9 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone, Semver {
     /// @notice An internal mapping to allow for constant-time lookups of existing claims.
     mapping(ClaimHash => bool) internal claims;
 
+    /// @notice A mapping of addresses to VMs.
+    mapping(address => IBigStepper) internal addressVM;
+
     /// @param _gameType The type ID of the game.
     /// @param _absolutePrestate The absolute prestate of the instruction trace.
     /// @param _maxGameDepth The maximum depth of bisection.
@@ -99,7 +102,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone, Semver {
         ABSOLUTE_PRESTATE = _absolutePrestate;
         MAX_GAME_DEPTH = _maxGameDepth;
         GAME_DURATION = _gameDuration;
-        VM = _vm;
+        DEFAULT_VM = _vm;
         L2_OUTPUT_ORACLE = _l2oo;
         BLOCK_ORACLE = _blockOracle;
     }
@@ -172,7 +175,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone, Semver {
         // SAFETY:    While the `attack` path does not need an extra check for the post
         //            state's depth in relation to the parent, we don't need another
         //            branch because (n - n) % 2 == 0.
-        bool validStep = VM.step(_stateData, _proof) == Claim.unwrap(postState.claim);
+        bool validStep = VM().step(_stateData, _proof) == Claim.unwrap(postState.claim);
         bool parentPostAgree = (parentPos.depth() - postState.position.depth()) % 2 == 0;
         if (parentPostAgree == validStep) revert ValidStep();
 
@@ -281,7 +284,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone, Semver {
         // INVARIANT: Local data can only be added if the game is currently in progress.
         if (status != GameStatus.IN_PROGRESS) revert GameNotInProgress();
 
-        IPreimageOracle oracle = VM.oracle();
+        IPreimageOracle oracle = VM().oracle();
         bytes4 loadLocalDataSelector = IPreimageOracle.loadLocalData.selector;
         assembly {
             // Store the `loadLocalData(uint256,bytes32,uint256,uint256)` selector
@@ -557,5 +560,17 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone, Semver {
         while (Position.unwrap(ancestor_.position) != Position.unwrap(preStateTraceAncestor)) {
             ancestor_ = claimData[ancestor_.parentIndex];
         }
+    }
+
+    function VM() public view returns (IBigStepper) {
+        return DEFAULT_VM;
+    }
+
+    function VM(address addr) public view returns (IBigStepper) {
+        return addressVM[addr];
+    }
+
+    function _setVM(address addr, IBigStepper vm) internal {
+        addressVM[addr] = vm;
     }
 }
