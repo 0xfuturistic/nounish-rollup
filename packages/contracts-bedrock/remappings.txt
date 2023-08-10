@@ -12,3 +12,4 @@ openzeppelin-contracts/=lib/openzeppelin-contracts/
 sol-uriencode/=lib/nouns-protocol/node_modules/sol-uriencode/
 sol2string/=lib/nouns-protocol/node_modules/sol2string/
 solmate/=lib/solmate/src/
+erc6551/=lib/erc6551/src/
