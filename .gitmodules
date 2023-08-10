@@ -19,3 +19,6 @@
 [submodule "packages/contracts-bedrock/lib/nouns-protocol"]
 	path = packages/contracts-bedrock/lib/nouns-protocol
 	url = https://github.com/ourzora/nouns-protocol
+[submodule "packages/contracts-bedrock/lib/erc6551"]
+	path = packages/contracts-bedrock/lib/erc6551
+	url = https://github.com/erc6551/reference
