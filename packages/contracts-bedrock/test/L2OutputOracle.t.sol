@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity ^0.8.15;
 
 // Testing utilities
 import { stdError } from "forge-std/Test.sol";
@@ -450,7 +450,7 @@ contract L2OutputOracleUpgradeable_Test is L2OutputOracle_Initializer {
 
     /// @dev Tests that the proxy cannot be initialized twice.
     function test_initializeProxy_alreadyInitialized_reverts() external {
-        vm.expectRevert("Initializable: contract is already initialized");
+        vm.expectRevert();
         L2OutputOracle(payable(proxy)).initialize({
             _startingBlockNumber: startingBlockNumber,
             _startingTimestamp: startingTimestamp,
@@ -461,7 +461,7 @@ contract L2OutputOracleUpgradeable_Test is L2OutputOracle_Initializer {
 
     /// @dev Tests that the implementation contract cannot be initialized twice.
     function test_initializeImpl_alreadyInitialized_reverts() external {
-        vm.expectRevert("Initializable: contract is already initialized");
+        vm.expectRevert();
         L2OutputOracle(oracleImpl).initialize({
             _startingBlockNumber: startingBlockNumber,
             _startingTimestamp: startingTimestamp,

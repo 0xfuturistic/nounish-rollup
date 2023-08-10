@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity ^0.8.15;
 
 // Testing utilities
 // Target contract is imported by the `Bridge_Initializer`
