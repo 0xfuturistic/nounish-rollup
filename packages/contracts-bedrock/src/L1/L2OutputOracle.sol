@@ -348,6 +348,10 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
         return startingTimestamp + ((_l2BlockNumber - startingBlockNumber) * L2_BLOCK_TIME);
     }
 
+    /*//////////////////////////////////////////////////////////////
+                              NEW FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -362,7 +366,7 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
     }
 
     function nextProposerAddress() public view returns (address) {
-        return ownerOf(nextOutputIndex());
+        return ownerOf(nextOutputIndex()); // todo: get erc6551 account address
     }
 
     function _handleNextProposerNotMinted() internal {
