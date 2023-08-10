@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import {L2OutputOracle} from "./L2OutputOracle.sol";
-import {Token as NounsERC721} from "nouns-protocol/token/Token.sol";
-
+import {Token} from "nouns-protocol/token/Token.sol";
 import {IERC6551Registry} from "erc6551/interfaces/IERC6551Registry.sol";
 
-contract TokenizedL2OutputOracle is NounsERC721, L2OutputOracle {
+import {L2OutputOracle} from "./L2OutputOracle.sol";
+
+contract TokenizedL2OutputOracle is L2OutputOracle, Token {
     address public immutable DEFAULT_PROPOSER;
     address public immutable ERC6551_REGISTRY;
     address public immutable PROPOSER_ACCOUNT_IMPL;
@@ -19,7 +19,7 @@ contract TokenizedL2OutputOracle is NounsERC721, L2OutputOracle {
         address _defaultProposer,
         address _erc6551Registry,
         address _proposerAccountImpl
-    ) L2OutputOracle(_submissionInterval, _l2BlockTime, _finalizationPeriodSeconds) NounsERC721(_tokenManager) {
+    ) L2OutputOracle(_submissionInterval, _l2BlockTime, _finalizationPeriodSeconds) Token(_tokenManager) {
         DEFAULT_PROPOSER = _defaultProposer;
         ERC6551_REGISTRY = _erc6551Registry;
         PROPOSER_ACCOUNT_IMPL = _proposerAccountImpl;
@@ -36,7 +36,7 @@ contract TokenizedL2OutputOracle is NounsERC721, L2OutputOracle {
             /// @dev the token hasn't been minted, so DEFAULT_PROPOSER is the proposer
             proposer = DEFAULT_PROPOSER;
         } else {
-            /// @dev the token has been minted, so the token's owner is the proposer
+            /// @dev the token has been minted, so the token's account is the proposer
             proposer = IERC6551Registry(ERC6551_REGISTRY).account(
                 PROPOSER_ACCOUNT_IMPL, block.chainid, address(this), tokenId, 0
             );
