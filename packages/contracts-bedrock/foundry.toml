@@ -6,12 +6,21 @@ optimizer = true
 optimizer_runs = 999999
 
 remappings = [
-  '@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts',
-  '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts',
-  '@rari-capital/solmate/=lib/solmate',
-  "@cwia/=lib/clones-with-immutable-args/src",
-  'forge-std/=lib/forge-std/src',
-  'ds-test/=lib/ds-test/src'
+  "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+  "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+  "@rari-capital/solmate/=lib/solmate/",
+  "@cwia/=lib/clones-with-immutable-args/src/",
+  "forge-std/=lib/forge-std/src/",
+  "ds-test/=lib/ds-test/src/",
+  "clones-with-immutable-args/=lib/clones-with-immutable-args/src/",
+  "micro-onchain-metadata-utils/=lib/nouns-protocol/node_modules/micro-onchain-metadata-utils/src/",
+  "nouns-protocol/=lib/nouns-protocol/src/",
+  "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/",
+  "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+  "sol-uriencode/=lib/nouns-protocol/node_modules/sol-uriencode/",
+  "sol2string/=lib/nouns-protocol/node_modules/sol2string/",
+  "solmate/=lib/solmate/src/",
+  "erc6551/=lib/erc6551/src/",
 ]
 extra_output = ['devdoc', 'userdoc', 'metadata', 'storageLayout']
 bytecode_hash = 'none'
@@ -21,12 +30,12 @@ ffi = true
 fuzz_runs = 16
 
 fs_permissions = [
-  { 'access'='read-write', 'path'='./.resource-metering.csv' },
-  { 'access'='read-write', 'path'='./deployments/' },
-  { 'access'='read', 'path'='./deploy-config/' },
-  { 'access'='read', 'path'='./broadcast/' },
+  { 'access' = 'read-write', 'path' = './.resource-metering.csv' },
+  { 'access' = 'read-write', 'path' = './deployments/' },
+  { 'access' = 'read', 'path' = './deploy-config/' },
+  { 'access' = 'read', 'path' = './broadcast/' },
   { access = 'read', path = './forge-artifacts/' },
-  { 'access'='write', 'path'='./semver-lock.json' },
+  { 'access' = 'write', 'path' = './semver-lock.json' },
 ]
 
 [profile.ci]
