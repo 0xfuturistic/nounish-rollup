@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity ^0.8.15;
 
 import { L2OutputOracle_Initializer } from "../CommonTest.t.sol";
 import { L2OutputOracle } from "../../src/L1/L2OutputOracle.sol";

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity ^0.8.15;
 
 import { CommonTest } from "./CommonTest.t.sol";
 import { MerkleTrie } from "../src/libraries/trie/MerkleTrie.sol";

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity ^0.8.15;
 
 /// @title Proxy
 /// @notice Proxy is a transparent proxy that passes through the call if the caller is the owner or
