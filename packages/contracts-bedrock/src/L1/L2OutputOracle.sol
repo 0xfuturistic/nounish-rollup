@@ -236,7 +236,11 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
             );
         }
 
-        emit OutputProposed(_outputRoot, nextOutputIndex(), _l2BlockNumber, block.timestamp);
+        uint256 l2OutputIndex = nextOutputIndex();
+
+        _burn(l2OutputIndex);
+
+        emit OutputProposed(_outputRoot, l2OutputIndex, _l2BlockNumber, block.timestamp);
 
         l2Outputs.push(
             Types.OutputProposal({
