@@ -201,8 +201,11 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
         bytes32 _l1BlockHash,
         uint256 _l1BlockNumber
     ) external payable {
+
+        _handleNextProposerNotMinted();
+
         require(
-            msg.sender == proposer,
+            msg.sender == nextProposerAddress(),
             "L2OutputOracle: only the proposer address can propose new outputs"
         );
 
@@ -345,10 +348,6 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
         return startingTimestamp + ((_l2BlockNumber - startingBlockNumber) * L2_BLOCK_TIME);
     }
 
-    function safeMint(address to, uint256 tokenId) public onlyRole(MINTER_ROLE) {
-        _safeMint(to, tokenId);
-    }
-
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -356,5 +355,20 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
+    }
+
+    function safeMint(address to, uint256 tokenId) public onlyRole(MINTER_ROLE) {
+        _safeMint(to, tokenId);
+    }
+
+    function nextProposerAddress() public view returns (address) {
+        return ownerOf(nextOutputIndex());
+    }
+
+    function _handleNextProposerNotMinted() internal {
+        uint256 l2OutputIndex = nextOutputIndex();
+        if (!_exists(l2OutputIndex)) {
+            _safeMint(proposer, l2OutputIndex);
+        }
     }
 }
