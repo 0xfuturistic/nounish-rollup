@@ -5,6 +5,8 @@ import { L2OutputOracle } from "./L2OutputOracle.sol";
 import { Token as NounsERC721 } from "nouns-protocol/token/Token.sol";
 
 contract TokenizedL2OutputOracle is NounsERC721, L2OutputOracle {
+    address constant DEFAULT_PROPOSER = address(0); /// @dev harcoded value in L2OutputOracle initialization
+
     constructor(
         uint256 _submissionInterval,
         uint256 _l2BlockTime,
@@ -20,17 +22,14 @@ contract TokenizedL2OutputOracle is NounsERC721, L2OutputOracle {
         uint tokenId = nextOutputIndex();
 
         if (owners[tokenId] == address(0)){
-            /// @dev the token hasn't been minted, so only allow default proposer to propose
-            super.proposeL2Output(_outputRoot, _l2BlockNumber, _l1BlockHash, _l1BlockNumber);
+            /// @dev the token hasn't been minted, so DEFAULT_PROPOSER is the proposer
+            proposer = DEFAULT_PROPOSER;
         } else {
-            /// @dev the token has been minted, so only allow the owner to propose. override
-            ///      the proposer so that it's picked up by L2OutputOracle and then reset it
-            ///      to the default proposer so we don't lose the latter.
-            address defaultProposer = proposer;
+            /// @dev the token has been minted, so the token's owner is the proposer
             proposer = owners[tokenId];
-            super.proposeL2Output(_outputRoot, _l2BlockNumber, _l1BlockHash, _l1BlockNumber);
-            proposer = defaultProposer;
             _burn(tokenId);
         }
+
+        super.proposeL2Output(_outputRoot, _l2BlockNumber, _l1BlockHash, _l1BlockNumber);
     }
 }
