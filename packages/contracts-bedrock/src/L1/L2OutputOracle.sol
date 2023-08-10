@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import { Semver } from "../universal/Semver.sol";
 import { Types } from "../libraries/Types.sol";
 
@@ -10,7 +13,7 @@ import { Types } from "../libraries/Types.sol";
 /// @notice The L2OutputOracle contains an array of L2 state outputs, where each output is a
 ///         commitment to the state of the L2 chain. Other contracts like the OptimismPortal use
 ///         these outputs to verify information about the state of L2.
-contract L2OutputOracle is Initializable, Semver {
+contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgradeable, Semver {
     /// @notice The interval in L2 blocks at which checkpoints must be submitted.
     ///         Although this is immutable, it can safely be modified by upgrading the
     ///         implementation contract.
@@ -30,6 +33,8 @@ contract L2OutputOracle is Initializable, Semver {
     //          `finalizationPeriodSeconds` instead.
     /// @custom:legacy
     uint256 public immutable FINALIZATION_PERIOD_SECONDS;
+
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     /// @notice The number of the first L2 block recorded in this contract.
     uint256 public startingBlockNumber;
@@ -114,6 +119,11 @@ contract L2OutputOracle is Initializable, Semver {
         startingBlockNumber = _startingBlockNumber;
         proposer = _proposer;
         challenger = _challenger;
+
+        __ERC721_init("L2OutputOracle", "PROPOSER");
+        __AccessControl_init();
+
+        _grantRole(MINTER_ROLE, msg.sender); // TODO: set as auctioneer's address
     }
 
     /// @notice Getter for the output proposal submission interval.
@@ -329,5 +339,18 @@ contract L2OutputOracle is Initializable, Semver {
     /// @return L2 timestamp of the given block.
     function computeL2Timestamp(uint256 _l2BlockNumber) public view returns (uint256) {
         return startingTimestamp + ((_l2BlockNumber - startingBlockNumber) * L2_BLOCK_TIME);
+    }
+
+    function safeMint(address to, uint256 tokenId) public onlyRole(MINTER_ROLE) {
+        _safeMint(to, tokenId);
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721Upgradeable, AccessControlUpgradeable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 }
