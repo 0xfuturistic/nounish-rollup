@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { Semver } from "../universal/Semver.sol";
 import { Types } from "../libraries/Types.sol";
 
@@ -13,7 +10,7 @@ import { Types } from "../libraries/Types.sol";
 /// @notice The L2OutputOracle contains an array of L2 state outputs, where each output is a
 ///         commitment to the state of the L2 chain. Other contracts like the OptimismPortal use
 ///         these outputs to verify information about the state of L2.
-contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgradeable, Semver {
+contract L2OutputOracle is Initializable, Semver {
     /// @notice The interval in L2 blocks at which checkpoints must be submitted.
     ///         Although this is immutable, it can safely be modified by upgrading the
     ///         implementation contract.
@@ -33,8 +30,6 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
     //          `finalizationPeriodSeconds` instead.
     /// @custom:legacy
     uint256 public immutable FINALIZATION_PERIOD_SECONDS;
-
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     /// @notice The number of the first L2 block recorded in this contract.
     uint256 public startingBlockNumber;
@@ -59,10 +54,7 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
     /// @param l2BlockNumber The L2 block number of the output root.
     /// @param l1Timestamp   The L1 timestamp when proposed.
     event OutputProposed(
-        bytes32 indexed outputRoot,
-        uint256 indexed l2OutputIndex,
-        uint256 indexed l2BlockNumber,
-        uint256 l1Timestamp
+        bytes32 indexed outputRoot, uint256 indexed l2OutputIndex, uint256 indexed l2BlockNumber, uint256 l1Timestamp
     );
 
     /// @notice Emitted when outputs are deleted.
@@ -70,7 +62,7 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
     /// @param newNextOutputIndex  Next L2 output index after the deletion.
     event OutputsDeleted(uint256 indexed prevNextOutputIndex, uint256 indexed newNextOutputIndex);
 
-    /// @custom:semver 1.4.0
+    /// @custom:semver 1.4.1
     /// @notice Constructs the L2OutputOracle contract.
     /// @param _submissionInterval  Interval in blocks at which checkpoints must be submitted.
     /// @param _l2BlockTime         The time per L2 block, in seconds.
@@ -80,23 +72,17 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
         uint256 _submissionInterval,
         uint256 _l2BlockTime,
         uint256 _finalizationPeriodSeconds
-    ) Semver(1, 4, 0) {
+    )
+        Semver(1, 4, 1)
+    {
         require(_l2BlockTime > 0, "L2OutputOracle: L2 block time must be greater than 0");
-        require(
-            _submissionInterval > 0,
-            "L2OutputOracle: submission interval must be greater than 0"
-        );
+        require(_submissionInterval > 0, "L2OutputOracle: submission interval must be greater than 0");
 
         SUBMISSION_INTERVAL = _submissionInterval;
         L2_BLOCK_TIME = _l2BlockTime;
         FINALIZATION_PERIOD_SECONDS = _finalizationPeriodSeconds;
 
-        initialize({
-            _startingBlockNumber: 0,
-            _startingTimestamp: 0,
-            _proposer: address(0),
-            _challenger: address(0)
-        });
+        initialize({ _startingBlockNumber: 0, _startingTimestamp: 0, _proposer: address(0), _challenger: address(0) });
     }
 
     /// @notice Initializer.
@@ -109,7 +95,10 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
         uint256 _startingTimestamp,
         address _proposer,
         address _challenger
-    ) public reinitializer(2) {
+    )
+        public
+        reinitializer(2)
+    {
         require(
             _startingTimestamp <= block.timestamp,
             "L2OutputOracle: starting L2 timestamp must be less than current time"
@@ -119,11 +108,6 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
         startingBlockNumber = _startingBlockNumber;
         proposer = _proposer;
         challenger = _challenger;
-
-        __ERC721_init("L2OutputOracle", "PROPOSER");
-        __AccessControl_init();
-
-        _grantRole(MINTER_ROLE, msg.sender); // TODO: set as auctioneer's address
     }
 
     /// @notice Getter for the output proposal submission interval.
@@ -161,15 +145,11 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
     ///                       All outputs after this output will also be deleted.
     // solhint-disable-next-line ordering
     function deleteL2Outputs(uint256 _l2OutputIndex) external {
-        require(
-            msg.sender == challenger,
-            "L2OutputOracle: only the challenger address can delete outputs"
-        );
+        require(msg.sender == challenger, "L2OutputOracle: only the challenger address can delete outputs");
 
         // Make sure we're not *increasing* the length of the array.
         require(
-            _l2OutputIndex < l2Outputs.length,
-            "L2OutputOracle: cannot delete outputs after the latest output index"
+            _l2OutputIndex < l2Outputs.length, "L2OutputOracle: cannot delete outputs after the latest output index"
         );
 
         // Do not allow deleting any outputs that have already been finalized.
@@ -200,14 +180,12 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
         uint256 _l2BlockNumber,
         bytes32 _l1BlockHash,
         uint256 _l1BlockNumber
-    ) external payable {
-
-        _handleNextProposerNotMinted();
-
-        require(
-            msg.sender == nextProposerAddress(),
-            "L2OutputOracle: only the proposer address can propose new outputs"
-        );
+    )
+        public
+        virtual
+        payable
+    {
+        require(msg.sender == proposer, "L2OutputOracle: only the proposer address can propose new outputs");
 
         require(
             _l2BlockNumber == nextBlockNumber(),
@@ -219,10 +197,7 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
             "L2OutputOracle: cannot propose L2 output in the future"
         );
 
-        require(
-            _outputRoot != bytes32(0),
-            "L2OutputOracle: L2 output proposal cannot be the zero hash"
-        );
+        require(_outputRoot != bytes32(0), "L2OutputOracle: L2 output proposal cannot be the zero hash");
 
         if (_l1BlockHash != bytes32(0)) {
             // This check allows the proposer to propose an output based on a given L1 block,
@@ -239,11 +214,7 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
             );
         }
 
-        uint256 l2OutputIndex = nextOutputIndex();
-
-        _burn(l2OutputIndex);
-
-        emit OutputProposed(_outputRoot, l2OutputIndex, _l2BlockNumber, block.timestamp);
+        emit OutputProposed(_outputRoot, nextOutputIndex(), _l2BlockNumber, block.timestamp);
 
         l2Outputs.push(
             Types.OutputProposal({
@@ -257,11 +228,7 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
     /// @notice Returns an output by index. Needed to return a struct instead of a tuple.
     /// @param _l2OutputIndex Index of the output to return.
     /// @return The output at the given index.
-    function getL2Output(uint256 _l2OutputIndex)
-        external
-        view
-        returns (Types.OutputProposal memory)
-    {
+    function getL2Output(uint256 _l2OutputIndex) external view returns (Types.OutputProposal memory) {
         return l2Outputs[_l2OutputIndex];
     }
 
@@ -278,10 +245,7 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
         );
 
         // Make sure there's at least one output proposed.
-        require(
-            l2Outputs.length > 0,
-            "L2OutputOracle: cannot get output as no outputs have been proposed yet"
-        );
+        require(l2Outputs.length > 0, "L2OutputOracle: cannot get output as no outputs have been proposed yet");
 
         // Find the output via binary search, guaranteed to exist.
         uint256 lo = 0;
@@ -303,11 +267,7 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
     ///         block.
     /// @param _l2BlockNumber L2 block number to find a checkpoint for.
     /// @return First checkpoint that commits to the given L2 block number.
-    function getL2OutputAfter(uint256 _l2BlockNumber)
-        external
-        view
-        returns (Types.OutputProposal memory)
-    {
+    function getL2OutputAfter(uint256 _l2BlockNumber) external view returns (Types.OutputProposal memory) {
         return l2Outputs[getL2OutputIndexAfter(_l2BlockNumber)];
     }
 
@@ -329,10 +289,7 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
     ///         block number.
     /// @return Latest submitted L2 block number.
     function latestBlockNumber() public view returns (uint256) {
-        return
-            l2Outputs.length == 0
-                ? startingBlockNumber
-                : l2Outputs[l2Outputs.length - 1].l2BlockNumber;
+        return l2Outputs.length == 0 ? startingBlockNumber : l2Outputs[l2Outputs.length - 1].l2BlockNumber;
     }
 
     /// @notice Computes the block number of the next L2 block that needs to be checkpointed.
@@ -346,33 +303,5 @@ contract L2OutputOracle is Initializable, ERC721Upgradeable, AccessControlUpgrad
     /// @return L2 timestamp of the given block.
     function computeL2Timestamp(uint256 _l2BlockNumber) public view returns (uint256) {
         return startingTimestamp + ((_l2BlockNumber - startingBlockNumber) * L2_BLOCK_TIME);
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                              NEW FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721Upgradeable, AccessControlUpgradeable)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
-    }
-
-    function safeMint(address to, uint256 tokenId) public onlyRole(MINTER_ROLE) {
-        _safeMint(to, tokenId);
-    }
-
-    function nextProposerAddress() public view returns (address) {
-        return ownerOf(nextOutputIndex()); // todo: get erc6551 account address
-    }
-
-    function _handleNextProposerNotMinted() internal {
-        uint256 l2OutputIndex = nextOutputIndex();
-        if (!_exists(l2OutputIndex)) {
-            _safeMint(proposer, l2OutputIndex);
-        }
     }
 }
